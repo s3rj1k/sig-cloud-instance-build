@@ -13,7 +13,7 @@
 url --url="http://mirrors.kernel.org/centos/7/os/x86_64/"
 install
 keyboard us
-rootpw --lock --iscrypted locked
+rootpw --plaintext root
 timezone --isUtc --nontp UTC
 selinux --disabled
 firewall --disabled
@@ -36,12 +36,10 @@ part / --size 3000 --fstype ext4
 
 # Package setup
 %packages --excludedocs --instLangs=en --nocore
-bind-utils
-bash
 yum
-vim-minimal
 centos-release
-less
+bash
+nano
 -kernel*
 -*firmware
 -firewalld-filesystem
@@ -58,9 +56,7 @@ rootfiles
 -teamd
 tar
 passwd
-yum-utils
-yum-plugin-ovl
-sum
+hpsum
 hponcfg
 
 %end
@@ -80,7 +76,7 @@ touch /tmp/NOSAVE_LOGS
 # kernel needs to be removed by rpm, because of grubby
 rpm -e kernel
 
-yum -y remove bind-libs bind-libs-lite dhclient dhcp-common dhcp-libs \
+yum -y remove bind-libs bind-libs-lite \
   dracut-network e2fsprogs e2fsprogs-libs ebtables ethtool file \
   firewalld freetype gettext gettext-libs groff-base grub2 grub2-tools \
   grubby initscripts iproute iptables kexec-tools libcroco libgomp \
@@ -91,27 +87,20 @@ yum -y remove bind-libs bind-libs-lite dhclient dhcp-common dhcp-libs \
 
 yum clean all
 
-#clean up unused directories
+# Clean up unused directories
 rm -rf /boot
 rm -rf /etc/firewalld
-
-# Lock roots account, keep roots account password-less.
-passwd -l root
-
-#LANG="en_US"
-#echo "%_install_lang $LANG" > /etc/rpm/macros.image-language-conf
 
 awk '(NF==0&&!done){print "override_install_langs=en_US.utf8\ntsflags=nodocs";done=1}{print}' \
     < /etc/yum.conf > /etc/yum.conf.new
 mv /etc/yum.conf.new /etc/yum.conf
 echo 'container' > /etc/yum/vars/infra
 
-##Setup locale properly
-# Commenting out, as this seems to no longer be needed
+# Setup locale properly
 #rm -f /usr/lib/locale/locale-archive
 #localedef -v -c -i en_US -f UTF-8 en_US.UTF-8
 
-## Remove some things we don't need
+# Remove some things we don't need
 rm -f /tmp/ks-script*
 rm -rf /boot
 rm -rf /etc/sysconfig/network-scripts/ifcfg-*
@@ -119,20 +108,20 @@ rm -rf /tmp/*
 rm -rf /var/cache/yum/*
 rm -rf /var/log/*
 
-# do we really need a hardware database in a container?
-rm -rf /etc/udev/hwdb.bin
-rm -rf /usr/lib/udev/hwdb.d/*
-
-## Systemd fixes
-# no machine-id by default.
+# No machine-id by default.
 :> /etc/machine-id
+
 # Fix /run/lock breakage since it's not tmpfs in docker
 umount /run
 systemd-tmpfiles --create --boot
+
 # Make sure login works
 rm /var/run/nologin
 
-#Generate installtime file record
+# Generate installtime file record
 /bin/date +%Y%m%d_%H%M > /etc/BUILDTIME
+
+# Create /init symlink
+ln -s /sbin/init /init
 
 %end
