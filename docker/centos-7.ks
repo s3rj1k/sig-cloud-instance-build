@@ -15,7 +15,7 @@ install
 keyboard us
 rootpw --lock --iscrypted locked
 timezone --isUtc --nontp UTC
-selinux --enforcing
+selinux --disabled
 firewall --disabled
 network --bootproto=dhcp --device=link --activate --onboot=on
 shutdown
@@ -24,8 +24,10 @@ lang en_US
 
 # Repositories to use
 repo --name="CentOS" --baseurl=http://mirror.centos.org/centos/7/os/x86_64/ --cost=100
-## Uncomment for rolling builds
 repo --name="Updates" --baseurl=http://mirror.centos.org/centos/7/updates/x86_64/ --cost=100
+repo --name="EPEL" --baseurl=http://dl.fedoraproject.org/pub/epel/7/x86_64 --cost=100
+repo --name="MCP" --baseurl=http://downloads.linux.hpe.com/repo/mcp/centos/7/x86_64/current/ --cost=100
+repo --name="HPE_SUM" --baseurl=http://downloads.linux.hpe.com/repo/hpsum/rhel/7/x86_64/current/ --cost=100
 
 # Disk setup
 zerombr
@@ -58,6 +60,8 @@ tar
 passwd
 yum-utils
 yum-plugin-ovl
+sum
+hponcfg
 
 %end
 
@@ -102,16 +106,19 @@ awk '(NF==0&&!done){print "override_install_langs=en_US.utf8\ntsflags=nodocs";do
 mv /etc/yum.conf.new /etc/yum.conf
 echo 'container' > /etc/yum/vars/infra
 
-
 ##Setup locale properly
 # Commenting out, as this seems to no longer be needed
 #rm -f /usr/lib/locale/locale-archive
 #localedef -v -c -i en_US -f UTF-8 en_US.UTF-8
 
 ## Remove some things we don't need
-rm -rf /var/cache/yum/x86_64
 rm -f /tmp/ks-script*
+rm -rf /boot
 rm -rf /etc/sysconfig/network-scripts/ifcfg-*
+rm -rf /tmp/*
+rm -rf /var/cache/yum/*
+rm -rf /var/log/*
+
 # do we really need a hardware database in a container?
 rm -rf /etc/udev/hwdb.bin
 rm -rf /usr/lib/udev/hwdb.d/*
@@ -125,9 +132,7 @@ systemd-tmpfiles --create --boot
 # Make sure login works
 rm /var/run/nologin
 
-
 #Generate installtime file record
 /bin/date +%Y%m%d_%H%M > /etc/BUILDTIME
-
 
 %end
