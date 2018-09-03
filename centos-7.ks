@@ -1,5 +1,8 @@
 # livemedia-creator --no-virt --make-tar --ks centos-7.ks --image-name=centos-root.tar.xz --project "CentOS 7 RootFS" --releasever "7"
-# sudo find . -print0 | sudo cpio --null -ov --format=newc | sudo gzip -9 > ~/rootfs.gz
+# rm -rf /mnt/* ; tar -Jxf /var/tmp/centos-root.tar.xz -C /mnt
+# cd /mnt ; find . -print0 | cpio --null -ov --format=newc | gzip -9 > ~/rootfs.gz
+
+# scp root@172.21.1.131:~/rootfs.gz ~ ; scp ~/rootfs.gz 172.21.0.70:~
 
 # Basic setup information
 url --url="http://mirrors.kernel.org/centos/7/os/x86_64/"
@@ -42,7 +45,7 @@ hponcfg
 %end
 
 %pre
-# Pre configure tasks for Docker
+# Pre configure tasks
 
 # Don't add the anaconda build logs to the image
 # see /usr/share/anaconda/post-scripts/99-copy-logs.ks
@@ -50,7 +53,13 @@ touch /tmp/NOSAVE_LOGS
 %end
 
 %post --log=/anaconda-post.log
-# Post configure tasks for Docker
+# Post configure tasks
+
+# Install HPSUM
+yum localinstall -y --nogpgcheck http://downloads.linux.hpe.com/repo/hpsum/rhel/7/x86_64/current/hpsum-7.6.0-86.rhel7.x86_64.rpm
+
+# Update local packages
+yum update -y --nogpgcheck --skip-broken
 
 # remove stuff we don't need that anaconda insists on
 # kernel needs to be removed by rpm, because of grubby
