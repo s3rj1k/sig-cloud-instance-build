@@ -1,13 +1,5 @@
-# This is a minimal CentOS kickstart designed for docker.
-# It will not produce a bootable system
-# To use this kickstart, run the following command
-# livemedia-creator --make-tar \
-#   --iso=/path/to/boot.iso  \
-#   --ks=centos-7.ks \
-#   --image-name=centos-root.tar.xz
-#
-# Once the image has been generated, it can be imported into docker
-# by using: cat centos-root.tar.xz | docker import -i imagename
+# livemedia-creator --no-virt --make-tar --ks centos-7.ks --image-name=centos-root.tar.xz --project "CentOS 7 RootFS" --releasever "7"
+# sudo find . -print0 | sudo cpio --null -ov --format=newc | sudo gzip -9 > ~/rootfs.gz
 
 # Basic setup information
 url --url="http://mirrors.kernel.org/centos/7/os/x86_64/"
@@ -36,25 +28,13 @@ part / --size 3000 --fstype ext4
 
 # Package setup
 %packages --excludedocs --instLangs=en --nocore
-yum
-centos-release
+rpm
 bash
 nano
--kernel*
--*firmware
--firewalld-filesystem
--os-prober
--gettext*
--GeoIP
--bind-license
--freetype
 iputils
 iproute
 systemd
 rootfiles
--libteam
--teamd
-tar
 passwd
 hpsum
 hponcfg
@@ -75,17 +55,6 @@ touch /tmp/NOSAVE_LOGS
 # remove stuff we don't need that anaconda insists on
 # kernel needs to be removed by rpm, because of grubby
 rpm -e kernel
-
-yum -y remove bind-libs bind-libs-lite \
-  dracut-network e2fsprogs e2fsprogs-libs ebtables ethtool file \
-  firewalld freetype gettext gettext-libs groff-base grub2 grub2-tools \
-  grubby initscripts iproute iptables kexec-tools libcroco libgomp \
-  libmnl libnetfilter_conntrack libnfnetlink libselinux-python lzo \
-  libunistring os-prober python-decorator python-slip python-slip-dbus \
-  snappy sysvinit-tools which linux-firmware GeoIP firewalld-filesystem \
-  qemu-guest-agent
-
-yum clean all
 
 # Clean up unused directories
 rm -rf /boot
